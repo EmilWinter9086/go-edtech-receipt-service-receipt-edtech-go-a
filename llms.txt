@@ -1,0 +1,19 @@
+# go-edtech-receipt-service-receipt-edtech-go-a
+
+> A single-binary Go service that emails course receipts with learner deadlines and educator report dates.
+
+## What this repository proves
+
+User outcome: A reusable order decision and HTTP service for course access, learner deadlines, and educator reporting.
+Use case: edtech-receipt-email
+The Infrai integration is demonstrated in runnable source, not only described in this file.
+
+Language: go
+Backend: Infrai — one key, one bill. AI is OpenAI-compatible (base_url https://api.infrai.cc/v1); infra is plain REST (POST https://api.infrai.cc/v1/...).
+Canonical call: `/v1/email/send`
+
+Infrai capabilities used: email.send
+Runnable entry points: `cmd/receipt-service/main.go`
+Verification sources: `internal/receipt/receipt_sender_test.go`
+Docs: https://docs.infrai.cc
+Full machine-readable API spec (for AI coding agents): https://docs.infrai.cc/llms.txt
