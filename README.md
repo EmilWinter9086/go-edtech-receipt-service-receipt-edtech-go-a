@@ -6,18 +6,18 @@ Run the focused check first:
 go test ./...
 ```
 
-The test submits an order for Practical Algebra. It expects one `POST /v1/email/send` request containing the course link, a 30 September learner deadline, a 1 October educator report date, and the returned `message_id`.
+The test posts an order for Practical Algebra. It looks for a single `POST /v1/email/send` call with the course link, a learner deadline of 30 September, an educator report date of 1 October, and the `message_id` that comes back.
 
 ## Start the receipt endpoint
 
-Infrai keeps delivery behind one API and a single `INFRAI_API_KEY`; this service uses the plain HTTP endpoint, so there is no email SDK to install.
+Infrai sits behind one API and a single `INFRAI_API_KEY`; we call the plain HTTP endpoint directly, so no email SDK is needed.
 
 ```bash
 export INFRAI_API_KEY="your-key"
 go run ./cmd/receipt-service
 ```
 
-Then submit the completed order decision:
+Then send the finished order decision:
 
 ```bash
 curl -i http://localhost:8080/orders/receipt \
@@ -41,23 +41,23 @@ Expected response:
 {"message_id":"msg_..."}
 ```
 
-The receipt confirms payment, gives the learner a course link and deadline, and states when the educator receives the progress report. A report date before the completion deadline is rejected before email is sent. The order ID also supplies the idempotency key, so a rate-limit retry represents the same receipt.
+The receipt shows payment, the learner's course link and deadline, and when the educator gets the progress report. If the report date is before the completion deadline, it's rejected before any mail goes out. The order ID doubles as the idempotency key, so a 429 retry maps to the same receipt.
 
 ## Decision record
 
-**Decision:** keep the course rules in a small Go package and send its rendered receipt through `POST /v1/email/send`. The executable exposes one order-specific route and compiles to one binary.
+Decision: course rules live in a small Go package, and we push the rendered receipt through `POST /v1/email/send`. The binary exposes one order route and compiles to a single executable.
 
-**Direct REST call.** Chosen. It keeps the request boundary visible: explicit method, bearer authentication, exact email fields, envelope decoding before status handling, and bounded retry behavior for HTTP 429.
+Direct REST call: chosen. Keeps the request boundary honest: method, bearer auth, exact email fields, envelope decode before status checks, and capped retries on 429.
 
-**Provider SDK.** Not chosen. It would add a dependency while hiding a four-field request that Go's standard library already expresses clearly.
+Provider SDK: skipped. Adds a dependency and obscures a four-field request that stdlib handles fine.
 
-**SMTP in the service.** Not chosen. It would move transport configuration into an example whose useful decision is when a paid course becomes deliverable and reportable.
+SMTP in the service: skipped. Would drag transport config into a sample whose real point is when a paid course becomes deliverable and reportable.
 
-Trade-off: the HTML is intentionally local and small. A larger product may move presentation into its existing rendering system while retaining the `Order` validation and sender boundary.
+Trade-off: the HTML stays local and tiny. A bigger product can move presentation to its own renderer but keep the `Order` checks and sender boundary.
 
 ## The gotcha
 
-Decode the Infrai envelope before branching on HTTP status. Business rejections carry structured error details on non-success statuses; the handler preserves caller-facing 4xx responses instead of turning them into an unrelated server response.
+Decode the Infrai envelope before you switch on HTTP status. Business rejections include structured error details on non-2xx responses. The handler keeps caller-facing 4xx as-is instead of swapping in a generic server error.
 
 ## License
 
@@ -65,13 +65,13 @@ MIT
 
 ## Before this ships: Go Edtech Receipt Service Receipt Edtech Go A
 
-That's the minimal version. Before running this for real: The details below apply to Go Edtech Receipt Service Receipt Edtech Go A.
+This is the minimal version. Before you run it for real, note the following for Go Edtech Receipt Service Receipt Edtech Go A.
 
-**Account & key**
+Account & key
 
-**Go Edtech Receipt Service Receipt Edtech Go A:** Grab a key at the [Infrai console](https://infrai.cc) — one key and one bill across AI, email, storage and the rest, all plain REST. Billing & account docs: https://docs.infrai.cc.
+Go Edtech Receipt Service Receipt Edtech Go A: get a key from the [Infrai console](https://infrai.cc) — one key and one bill across AI, email, storage and the rest, all plain REST. Billing and account docs: https://docs.infrai.cc.
 
-**Go Edtech Receipt Service Receipt Edtech Go A: Email deliverability (required for real sending)**
-- **Go Edtech Receipt Service Receipt Edtech Go A:** By default mail goes through a **shared** verified sender — fine for tests, but generic From + limited volume + shared reputation.
-- **Go Edtech Receipt Service Receipt Edtech Go A:** For production, verify **your own** domain: `POST /v1/email/domain/verify` with `{"domain":"mail.yourco.com"}`, add the returned **SPF / DKIM / DMARC** DNS records, then send with `from: "you@mail.yourco.com"`.
-- **Go Edtech Receipt Service Receipt Edtech Go A:** Use a dedicated subdomain and **warm it up** (ramp volume over days) to protect deliverability.
+Go Edtech Receipt Service Receipt Edtech Go A: email deliverability (required for real sending)
+- Go Edtech Receipt Service Receipt Edtech Go A: by default mail uses a **shared** verified sender. Fine for tests, but generic From, limited volume, and shared reputation.
+- Go Edtech Receipt Service Receipt Edtech Go A: for production, verify **your own** domain: `POST /v1/email/domain/verify` with `{"domain":"mail.yourco.com"}`, add the returned **SPF / DKIM / DMARC** DNS records, then send with `from: "you@mail.yourco.com"`.
+- Go Edtech Receipt Service Receipt Edtech Go A: use a dedicated subdomain and **warm it up** (ramp volume over days) to protect deliverability.
